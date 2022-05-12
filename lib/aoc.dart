@@ -27,10 +27,38 @@ void _solve<T, D>(
   print("part 2 - ${timeRun(() => part2(data))}\n");
 }
 
-Tuple2<Duration, T> timeRun<T, D>(T Function() fn) {
+Tuple2<String, T> timeRun<T, D>(T Function() fn) {
   Stopwatch sw = new Stopwatch()..start();
   T result = fn();
-  return Tuple2(sw.elapsed, result);
+  return Tuple2(formatDuration(sw.elapsed), result);
+}
+
+String formatDuration(Duration duration) {
+  var micros = duration.inMicroseconds;
+  var millis = duration.inMilliseconds;
+  var seconds = duration.inSeconds;
+  var minutes = duration.inMinutes;
+
+  var pretty = "";
+  if (minutes > 0) {
+    pretty += "${minutes}m";
+    seconds -= minutes * 60;
+    millis -= minutes * 60 * 1000;
+    micros -= minutes * 60 * 1000 * 1000;
+  }
+  if (seconds > 0) {
+    pretty += "${seconds}s";
+    millis -= seconds * 1000;
+    micros -= seconds * 1000 * 1000;
+  }
+  if (millis > 0) {
+    pretty += "${millis}ms";
+    micros -= millis * 1000;
+  }
+  if (micros > 0) {
+    pretty += "${micros}µ";
+  }
+  return pretty;
 }
 
 Future<Iterable<int>> readInts(String path) async {
