@@ -1,26 +1,21 @@
-import 'dart:io';
-import 'package:tuple/tuple.dart';
+import 'package:aoc2018/aoc.dart';
 
 void main() {
-  print("part 1 - ${part1()}");
-  print("part 2 - ${part2()}");
+  solve(readInts, part1, part2);
 }
 
-Tuple2<T, String> timeRun<T, D>(T Function() fn) {
-  Stopwatch sw = new Stopwatch()..start();
-  T result = fn();
-  return Tuple2(result, sw.elapsed.toString());
+int part1(Iterable<int> data) {
+  return data.reduce((acc, v) => acc + v);
 }
 
-Future<List<String>> read(String path) async {
-  File f = new File(path);
-  return f.readAsLines();
-}
-
-int part1() {
-  return 1;
-}
-
-int part2() {
-  return 1;
+int part2(Iterable<int> data) {
+  var list = data.toList();
+  var seen = {0};
+  var loc = 0;
+  var idx = 0;
+  while (true) {
+    loc += list[idx];
+    if (!seen.add(loc)) return loc;
+    idx = (idx + 1) % data.length;
+  }
 }
