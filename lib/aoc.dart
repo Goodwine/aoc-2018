@@ -11,7 +11,7 @@ void solve<T, D>(
   await _solve("input", reader, part1, part2);
 }
 
-void _solve<T, D>(
+Future<void> _solve<T, D>(
   String size,
   Future<D> Function(String path) reader,
   T Function(D) part1,

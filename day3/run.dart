@@ -1,7 +1,7 @@
 import 'package:aoc2018/aoc.dart';
 
 void main() {
-  solve(
+  solve<int, Iterable<Instruction>>(
     (String path) async => (await read(path)).map(Instruction.parse),
     part1,
     (v) => part2(v) + 1,

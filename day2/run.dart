@@ -6,7 +6,7 @@ void main() {
 }
 
 int part1(Iterable<String> data) {
-  var twoThree = data.map(countChars).fold(
+  var twoThree = data.map(countChars).fold<Tuple2<int, int>>(
       Tuple2(0, 0),
       (acc, counts) => Tuple2(
             acc.item1 + (repeats(2, counts) ? 1 : 0),
