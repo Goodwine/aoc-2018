@@ -20,16 +20,16 @@ Future<void> _solve<T, D>(
   var path = dirname(Platform.script.path);
 
   print("$size:");
-  var dataTuple = timeRun(() => reader("${path}/${size}.txt"));
+  var dataTuple = await timeRun(() => reader("${path}/${size}.txt"));
   var data = await dataTuple.item2;
   print("read   - [${dataTuple.item1}]");
-  print("part 1 - ${timeRun(() => part1(data))}");
-  print("part 2 - ${timeRun(() => part2(data))}\n");
+  print("part 1 - ${await timeRun(() => part1(data))}");
+  print("part 2 - ${await timeRun(() => part2(data))}\n");
 }
 
-Tuple2<String, T> timeRun<T, D>(T Function() fn) {
+Future<Tuple2<String, T>> timeRun<T, D>(T Function() fn) async {
   Stopwatch sw = new Stopwatch()..start();
-  T result = fn();
+  T result = await fn();
   return Tuple2(formatDuration(sw.elapsed), result);
 }
 
