@@ -2,12 +2,12 @@ import 'dart:io';
 import "package:path/path.dart" show dirname;
 import 'package:tuple/tuple.dart';
 
-void solve<T, D>(
-  Future<D> Function(String path) reader,
-  T Function(D) part1,
-  T Function(D) part2,
-) async {
+void solve<T, D>(Future<D> Function(String path) reader, T Function(D) part1, T Function(D) part2,
+    {String extra = ""}) async {
   await _solve("small", reader, part1, part2);
+  if (extra != "") {
+    await _solve(extra, reader, part1, part2);
+  }
   await _solve("input", reader, part1, part2);
 }
 
@@ -63,6 +63,10 @@ String formatDuration(Duration duration) {
 
 Future<Iterable<int>> readInts(String path) async {
   return (await read(path)).map(int.parse);
+}
+
+Future<Iterable<int>> readLineInts(String path) async {
+  return (await read(path)).expand((e) => e.split(" ")).map(int.parse);
 }
 
 Future<List<String>> read(String path) {
