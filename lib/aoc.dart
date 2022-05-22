@@ -75,3 +75,37 @@ Future<List<String>> read(String path) {
   File f = new File(path);
   return f.readAsLines();
 }
+
+class DLinkedList<T> {
+  T value;
+  late DLinkedList<T> prev, next;
+
+  DLinkedList(this.value) {
+    prev = this;
+    next = this;
+  }
+
+  DLinkedList<T> add(T v) {
+    // Between the marbles 1 and 2 positions clockwise. Meaning after "next".
+    var current = next;
+
+    // New marbe with the correct pointers.
+    var element = DLinkedList(v);
+    element.next = current.next;
+    element.prev = current;
+
+    // Replace previous references to cross through new marble.
+    current.next.prev = element;
+    current.next = element;
+    // New marble becomes curret.
+    return element;
+  }
+
+  DLinkedList<T> remove() {
+    // Just delete the references to this marble.
+    prev.next = next;
+    next.prev = prev;
+    // Marble clockwise to the one removed becomes current.
+    return next;
+  }
+}

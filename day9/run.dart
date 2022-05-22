@@ -18,40 +18,6 @@ void main() {
 const special = 23;
 const remove = 7;
 
-class DLinkedList {
-  int value;
-  late DLinkedList prev, next;
-
-  DLinkedList(this.value) {
-    prev = this;
-    next = this;
-  }
-
-  DLinkedList add(int v) {
-    // Between the marbles 1 and 2 positions clockwise. Meaning after "next".
-    var current = next;
-
-    // New marbe with the correct pointers.
-    var element = DLinkedList(v);
-    element.next = current.next;
-    element.prev = current;
-
-    // Replace previous references to cross through new marble.
-    current.next.prev = element;
-    current.next = element;
-    // New marble becomes curret.
-    return element;
-  }
-
-  DLinkedList remove() {
-    // Just delete the references to this marble.
-    prev.next = next;
-    next.prev = prev;
-    // Marble clockwise to the one removed becomes current.
-    return next;
-  }
-}
-
 int part1(Tuple2<int, int> data) => play(data.item1, data.item2);
 
 int play(int players, int n) {
