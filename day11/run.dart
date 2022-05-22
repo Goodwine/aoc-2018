@@ -1,7 +1,7 @@
 import 'package:aoc2018/aoc.dart';
 
-void main() async {
-  solve<dynamic, List<List<int>>>(
+void main() {
+  solve(
     (path) async => grid((await readInts(path)).first),
     part1,
     part2,
@@ -38,42 +38,42 @@ int square(List<List<int>> data, int x, int y, int s) {
   return sum;
 }
 
-Iterable<Future<List<int>>> allSquares(List<List<int>> data, int s) sync* {
+List<int> maxForSize(List<List<int>> data, int s) {
+  var max = -1000;
+  var mx = -1;
+  var my = -1;
+
   for (var y = 0; y < size; y++) {
     for (var x = 0; x < size; x++) {
-      yield (() async => [x + 1, y + 1, square(data, x, y, s)])();
-    }
-  }
-}
-
-Future<List<int>> maxForSize(List<List<int>> data, int s) async {
-  var max = [-1, -1, -1000];
-
-  for (final v in await Future.wait(allSquares(data, s))) {
-    if (v[2] > max[2]) {
-      max = v;
+      var v = square(data, x, y, s);
+      if (v > max) {
+        max = v;
+        mx = x;
+        my = y;
+      }
     }
   }
 
-  return max;
+  return [mx + 1, my + 1, max];
 }
 
-dynamic part1(List<List<int>> data) async => (await maxForSize(data, 3)).take(2).toList();
+Iterable<int> part1(List<List<int>> data) => maxForSize(data, 3).take(2);
 
-Iterable<Future<List<int>>> allSizes(List<List<int>> data) sync* {
-  for (var s = 1; s <= size; s++) {
-    yield (() async => [...await maxForSize(data, s), s])();
-  }
-}
+Iterable<int> part2(List<List<int>> data) {
+  var max = -1000;
+  var mx = -1;
+  var my = -1;
+  var ms = -1;
 
-dynamic part2(List<List<int>> data) async {
-  var max = [-1, -1, -1000, -1];
-
-  for (var v in await Future.wait(allSizes(data))) {
-    if (v[2] > max[2]) {
-      max = v;
+  for (var s = 1; s <= 30; s++) {
+    var v = maxForSize(data, s);
+    if (v[2] > max) {
+      max = v[2];
+      mx = v[0];
+      my = v[1];
+      ms = s;
     }
   }
 
-  return max;
+  return [mx, my, ms];
 }
