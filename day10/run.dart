@@ -37,37 +37,48 @@ class Particle {
     return Particle(data[0], data[1], data[2], data[3]);
   }
 
-  void reset() {
-    x = ox;
-    y = oy;
-  }
-
   void update() {
     x += dx;
     y += dy;
   }
 }
 
-bool sky(List<Particle> particles) {
+const canvasSize = 100;
+
+bool sky(List<Particle> particles, int count) {
   var minX = particles.map((e) => e.x).reduce(min);
   var maxX = particles.map((e) => e.x).reduce(max);
 
   var minY = particles.map((e) => e.y).reduce(min);
   var maxY = particles.map((e) => e.x).reduce(max);
 
-  if ((maxX - minX).abs() > 100) {
+  if ((maxX - minX).abs() > canvasSize) {
     // print("file too big, skipping");
     // print("minX:$minX,maxX:$maxX,minY:$minY,maxY:$maxY");
     return false;
   }
 
   // https://github.com/brendan-duncan/image/wiki/Examples
-  Image image = Image((maxX - minX).abs() + 5, (maxY - minY).abs() + 5);
-  fill(image, getColor(13, 17, 23));
+  Image image = Image(canvasSize, canvasSize + 14);
+  fill(image, getColor(15, 15, 35));
 
   for (var pixel in particles) {
-    drawPixel(image, pixel.x - minX, pixel.y - minY, getColor(255, 255, 255));
+    drawPixel(
+      image,
+      (pixel.x - minX) % canvasSize,
+      (pixel.y - minY) % canvasSize,
+      getColor(204, 204, 204),
+    );
   }
+
+  drawString(
+    image,
+    arial_14,
+    0,
+    canvasSize,
+    count.toString(),
+    color: getColor(255, 255, 102),
+  );
 
   File("${sourceDir()}/output.png").writeAsBytesSync(encodePng(image));
   return true;
@@ -76,9 +87,9 @@ bool sky(List<Particle> particles) {
 Future<String> part1(List<Particle> data) async {
   final console = Console();
 
-  while (true) {
+  for (var i = 0;; i++) {
     var result = await timeRun(() {
-      var res = sky(data);
+      var res = sky(data, i);
       for (var pixel in data) {
         pixel.update();
       }
@@ -94,4 +105,4 @@ Future<String> part1(List<Particle> data) async {
   return "Read output.png";
 }
 
-int part2(List<Particle> data) => 0;
+String part2(List<Particle> data) => "Read output.png";
