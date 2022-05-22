@@ -68,10 +68,11 @@ void maxForSizeIsolate(Tuple3<List<List<int>>, int, SendPort> tuple) {
   // print("size ${tuple.item2} done");
 }
 
+// Max is position 15.
 Future<List<int>> part2(List<List<int>> data) async {
   var max = [-1, -1, -1000, -1];
 
-  var size = 30; // uncomment for short check.
+  // var size = 30; // uncomment for short check.
 
   var ch = ReceivePort();
   for (var s = 1; s <= size; s++) {
