@@ -3,8 +3,10 @@ import "package:path/path.dart" show dirname;
 import 'package:tuple/tuple.dart';
 
 void solve<T, D>(Future<D> Function(String path) reader, T Function(D) part1, T Function(D) part2,
-    {String extra = ""}) async {
-  await _solve("small", reader, part1, part2);
+    {String extra = "", bool skipSmall = false}) async {
+  if (!skipSmall) {
+    await _solve("small", reader, part1, part2);
+  }
   if (extra != "") {
     await _solve(extra, reader, part1, part2);
   }
