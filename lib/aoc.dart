@@ -11,20 +11,20 @@ void solve<T, D>(Future<D> Function(String path) reader, T Function(D) part1, T 
   await _solve("input", reader, part1, part2);
 }
 
+String sourceDir() => dirname(Platform.script.path);
+
 Future<void> _solve<T, D>(
   String size,
   Future<D> Function(String path) reader,
   T Function(D) part1,
   T Function(D) part2,
 ) async {
-  var path = dirname(Platform.script.path);
-
   print("$size:");
-  var dataTuple = await timeRun(() => reader("${path}/${size}.txt"));
+  var dataTuple = await timeRun(() => reader("${sourceDir()}/${size}.txt"));
   var data = await dataTuple.item2;
   print("read   - [${dataTuple.item1}]");
-  print("part 1 - ${await timeRun(() => part1(data))}");
-  print("part 2 - ${await timeRun(() => part2(data))}\n");
+  print("part 1 - ${await timeRun(() async => await part1(data))}");
+  print("part 2 - ${await timeRun(() async => await part2(data))}\n");
 }
 
 Future<Tuple2<String, T>> timeRun<T, D>(T Function() fn) async {
