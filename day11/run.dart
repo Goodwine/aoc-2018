@@ -1,4 +1,7 @@
+import 'dart:isolate';
+
 import 'package:aoc2018/aoc.dart';
+import 'package:tuple/tuple.dart';
 
 void main() {
   solve(
@@ -54,26 +57,32 @@ List<int> maxForSize(List<List<int>> data, int s) {
     }
   }
 
-  return [mx + 1, my + 1, max];
+  return [mx + 1, my + 1, max, s];
 }
 
-Iterable<int> part1(List<List<int>> data) => maxForSize(data, 3).take(2);
+List<int> part1(List<List<int>> data) => maxForSize(data, 3);
 
-Iterable<int> part2(List<List<int>> data) {
-  var max = -1000;
-  var mx = -1;
-  var my = -1;
-  var ms = -1;
+// Isolate reduced time by 90%
+void maxForSizeIsolate(Tuple3<List<List<int>>, int, SendPort> tuple) {
+  tuple.item3.send(maxForSize(tuple.item1, tuple.item2));
+  // print("size ${tuple.item2} done");
+}
 
-  for (var s = 1; s <= 30; s++) {
-    var v = maxForSize(data, s);
-    if (v[2] > max) {
-      max = v[2];
-      mx = v[0];
-      my = v[1];
-      ms = s;
+Future<List<int>> part2(List<List<int>> data) async {
+  var max = [-1, -1, -1000, -1];
+
+  var size = 30; // uncomment for short check.
+
+  var ch = ReceivePort();
+  for (var s = 1; s <= size; s++) {
+    await Isolate.spawn(maxForSizeIsolate, Tuple3(data, s, ch.sendPort));
+  }
+
+  await for (final List<int> v in ch.take(size)) {
+    if (v[2] > max[2]) {
+      max = v;
     }
   }
 
-  return [mx, my, ms];
+  return max;
 }
