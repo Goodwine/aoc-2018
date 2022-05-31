@@ -1,8 +1,39 @@
+import 'dart:io';
+import 'dart:math';
+
 import 'package:aoc2018/aoc.dart';
 import 'package:tuple/tuple.dart';
 
 void main() {
-  solve(read, part1, part2);
+  solve(
+    prepare,
+    part1,
+    part2,
+    extra: "medium",
+  );
+}
+
+Future<Tuple2<List<String>, List<Coordinate>>> prepare(String path) async {
+  var data = await read(path);
+
+  final trackMap = data
+      .map((line) =>
+          line.replaceAll("^", "|").replaceAll("v", "|").replaceAll(">", "-").replaceAll("<", "-"))
+      .toList(growable: false);
+
+  List<Coordinate> carts = data
+      .asMap()
+      .entries
+      .map((line) => line.value.codeUnits
+          .asMap()
+          .entries
+          .where((cell) => cartDirMap.containsKey(cell.value))
+          .map((cell) =>
+              Coordinate(line.key, cell.key, cartDirMap[cell.value]!, Decision.counterClockWise)))
+      .expand((e) => e)
+      .toList();
+
+  return Tuple2(trackMap, carts);
 }
 
 enum Direction {
@@ -18,6 +49,8 @@ enum Direction {
   final int dy, dx;
 }
 
+enum Decision { counterClockWise, straight, clockWise }
+
 const directions = [
   Direction.up,
   Direction.right,
@@ -31,61 +64,57 @@ Map<int, Direction> cartDirMap = "^>v<"
     .entries
     .fold({}, (acc, v) => acc..putIfAbsent(v.value, () => directions[v.key]));
 
-// item1=Y, item2=X, item3=direction
-typedef Coordinate = Tuple4<int, int, Direction, Direction>;
+/// item1=Y, item2=X, item3=direction, item4=decision turn
+typedef Coordinate = Tuple4<int, int, Direction, Decision>;
 
-Iterable<Tuple2<int, int>> part1(List<String> data) {
-  final trackMap = data
-      .map((line) =>
-          line.replaceAll("^", "|").replaceAll("v", "|").replaceAll(">", "-").replaceAll("<", "-"))
-      .toList(growable: false);
-
-  List<Coordinate> carts = data
-      .asMap()
-      .entries
-      .map((line) => line.value.codeUnits
-          .asMap()
-          .entries
-          .where((cell) => cartDirMap.containsKey(cell.value))
-          .map((cell) => Coordinate(line.key, cell.key, cartDirMap[cell.value]!, Direction.left)))
-      .expand((e) => e)
-      .toList();
-
-  while (check(carts)) {
-    // print(carts);
-    carts = run(trackMap, carts);
+Tuple2<int, int> part1(Tuple2<List<String>, List<Coordinate>> data) {
+  List<String> trackMap = data.item1;
+  List<Coordinate> carts = data.item2.map((e) => e).toList();
+  while (true) {
+    final collisions = tick(trackMap, carts);
+    if (collisions.isNotEmpty)
+      return Tuple2(carts[collisions.first].item2, carts[collisions.first].item1);
   }
-
-  return carts
-      .map((c) => Tuple2(c.item2, c.item1))
-      .fold<Map<Tuple2<int, int>, int>>(
-          {},
-          (acc, v) => acc
-            ..putIfAbsent(v, () => 0)
-            ..update(v, (count) => count + 1))
-      .entries
-      .where((e) => e.value > 1)
-      .map((e) => e.key);
 }
 
-List<Coordinate> run(List<String> trackMap, List<Coordinate> carts) =>
-    carts.map((c) => next(trackMap, c)).toList();
+Set<int> tick(List<String> trackMap, List<Coordinate> carts, {keepGoing = false}) {
+  carts.sort((a, b) => a.item1 != b.item1 ? a.item1 - b.item1 : a.item2 - b.item2);
 
-final Map<Direction, Map<String, Direction Function(Direction)>> want = {
+  Set<int> collisions = {};
+  for (final cart in carts.asMap().entries) {
+    if (collisions.contains(cart.key)) continue;
+
+    final nextCart = next(trackMap, cart.value);
+
+    for (final otherCart in carts.asMap().entries) {
+      if (collisions.contains(otherCart.key)) continue;
+
+      if (otherCart.value.item1 == nextCart.item1 && otherCart.value.item2 == nextCart.item2) {
+        // print("collided at: ${nextCart.item2},${nextCart.item1}");
+        if (!keepGoing) return {otherCart.key};
+        collisions.addAll({cart.key, otherCart.key});
+        break;
+      }
+    }
+
+    carts[cart.key] = nextCart;
+  }
+  return collisions;
+}
+
+final Map<Direction, Map<String, Direction Function(Decision)>> want = {
   Direction.up: {
     "|": (_) => Direction.up,
     "/": (_) => Direction.right,
     "\\": (_) => Direction.left,
     "+": (turn) {
       switch (turn) {
-        case Direction.left:
+        case Decision.counterClockWise:
           return Direction.left;
-        case Direction.right:
+        case Decision.clockWise:
           return Direction.right;
-        case Direction.up:
+        case Decision.straight:
           return Direction.up;
-        case Direction.down:
-          throw Error();
       }
     },
   },
@@ -95,14 +124,12 @@ final Map<Direction, Map<String, Direction Function(Direction)>> want = {
     "\\": (_) => Direction.down,
     "+": (turn) {
       switch (turn) {
-        case Direction.left:
-          return Direction.down;
-        case Direction.right:
+        case Decision.counterClockWise:
           return Direction.up;
-        case Direction.up:
+        case Decision.clockWise:
+          return Direction.down;
+        case Decision.straight:
           return Direction.right;
-        case Direction.down:
-          throw Error();
       }
     },
   },
@@ -112,14 +139,12 @@ final Map<Direction, Map<String, Direction Function(Direction)>> want = {
     "\\": (_) => Direction.right,
     "+": (turn) {
       switch (turn) {
-        case Direction.left:
+        case Decision.counterClockWise:
           return Direction.right;
-        case Direction.right:
+        case Decision.clockWise:
           return Direction.left;
-        case Direction.up:
+        case Decision.straight:
           return Direction.down;
-        case Direction.down:
-          throw Error();
       }
     },
   },
@@ -129,14 +154,12 @@ final Map<Direction, Map<String, Direction Function(Direction)>> want = {
     "\\": (_) => Direction.up,
     "+": (turn) {
       switch (turn) {
-        case Direction.left:
+        case Decision.counterClockWise:
           return Direction.down;
-        case Direction.right:
+        case Decision.clockWise:
           return Direction.up;
-        case Direction.up:
+        case Decision.straight:
           return Direction.left;
-        case Direction.down:
-          throw Error();
       }
     },
   },
@@ -150,24 +173,32 @@ Coordinate next(List<String> trackMap, Coordinate cart) {
   var dir = (want[cart.item3]![cell]!)(turn);
   if (cell == "+") {
     switch (turn) {
-      case Direction.left:
-        turn = Direction.up;
+      case Decision.counterClockWise:
+        turn = Decision.straight;
         break;
-      case Direction.up:
-        turn = Direction.right;
+      case Decision.straight:
+        turn = Decision.clockWise;
         break;
-      case Direction.right:
-        turn = Direction.left;
+      case Decision.clockWise:
+        turn = Decision.counterClockWise;
         break;
-      case Direction.down:
-        throw Error();
     }
   }
 
   return Coordinate(y, x, dir, turn);
 }
 
-bool check(List<Coordinate> carts) =>
-    carts.map((c) => Tuple2(c.item1, c.item2)).toSet().length == carts.length;
-
-int part2(List<String> data) => 0;
+Tuple2<int, int> part2(Tuple2<List<String>, List<Coordinate>> data) {
+  List<String> trackMap = data.item1;
+  List<Coordinate> carts = data.item2;
+  while (true) {
+    final collisions = tick(trackMap, carts, keepGoing: true).toList()..sort((a, b) => b - a);
+    for (final idx in collisions) {
+      carts.removeAt(idx);
+    }
+    if (carts.isEmpty) return Tuple2(-1, -1);
+    if (carts.length == 1) {
+      return Tuple2(carts.first.item2, carts.first.item1);
+    }
+  }
+}
