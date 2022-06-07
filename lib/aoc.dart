@@ -109,3 +109,23 @@ class DLinkedList<T> {
     return next;
   }
 }
+
+enum Direction {
+  up(dy: -1, dx: 0),
+  right(dy: 0, dx: 1),
+  down(dy: 1, dx: 0),
+  left(dy: 0, dx: -1);
+
+  const Direction({
+    required this.dy,
+    required this.dx,
+  });
+  final int dy, dx;
+}
+
+const directions = [
+  Direction.up,
+  Direction.right,
+  Direction.down,
+  Direction.left,
+];

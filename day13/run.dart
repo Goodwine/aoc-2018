@@ -36,27 +36,7 @@ Future<Tuple2<List<String>, List<Coordinate>>> prepare(String path) async {
   return Tuple2(trackMap, carts);
 }
 
-enum Direction {
-  up(dy: -1, dx: 0),
-  right(dy: 0, dx: 1),
-  down(dy: 1, dx: 0),
-  left(dy: 0, dx: -1);
-
-  const Direction({
-    required this.dy,
-    required this.dx,
-  });
-  final int dy, dx;
-}
-
 enum Decision { counterClockWise, straight, clockWise }
-
-const directions = [
-  Direction.up,
-  Direction.right,
-  Direction.down,
-  Direction.left,
-];
 
 Map<int, Direction> cartDirMap = "^>v<"
     .codeUnits
