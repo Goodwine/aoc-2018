@@ -65,39 +65,6 @@ class Voronoi {
   }
 }
 
-const pointsAround = [
-  // -1s
-  // Point(-1, -1),
-  Point(-1, 0),
-  // Point(-1, 1),
-  // 0s
-  Point(0, -1),
-  Point(0, 1),
-  // 1s
-  // Point(1, -1),
-  Point(1, 0),
-  // Point(1, 1),
-];
-
-class Point {
-  final int x, y, id;
-  const Point(this.x, this.y, [this.id = -1]);
-
-  Iterable<Point> next(int maxSize) => pointsAround
-      .map((that) => Point(this.x + that.x, this.y + that.y, this.id))
-      .where((p) => p.x >= 0 && p.y >= 0 && p.x < maxSize && p.y < maxSize);
-
-  int distance(Point p) => (p.x - x).abs() + (p.y - y).abs();
-
-  String toString() => "(ID=$id)[x:$x,y:$y]";
-
-  @override
-  operator ==(that) => that is Point && that.x == x && that.y == y;
-
-  @override
-  int get hashCode => Object.hash(x, y);
-}
-
 int part1(List<Point> data) {
   var voronoi = Voronoi.from(data);
 

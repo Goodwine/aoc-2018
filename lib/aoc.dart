@@ -125,7 +125,31 @@ enum Direction {
 
 const directions = [
   Direction.up,
+  Direction.left,
   Direction.right,
   Direction.down,
-  Direction.left,
 ];
+
+class Point {
+  final int x, y, id;
+  const Point(this.x, this.y, [this.id = -1]);
+
+  Iterable<Point> next(int maxSize) => directions
+      .map((d) => Point(x + d.dx, y + d.dy, id))
+      .where((p) => p.x >= 0 && p.y >= 0 && p.x < maxSize && p.y < maxSize);
+
+  Point move(Direction dir) => Point(x + dir.dx, y + dir.dy, id);
+
+  int distance(Point p) => (p.x - x).abs() + (p.y - y).abs();
+
+  String toString() => "(ID=$id)[x:$x,y:$y]";
+
+  @override
+  operator ==(that) {
+    if (that is! Point) throw Exception("invalid comparison");
+    return that.x == x && that.y == y;
+  }
+
+  @override
+  int get hashCode => Object.hash(x, y);
+}
