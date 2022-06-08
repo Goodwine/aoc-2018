@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:io';
 import 'dart:math';
 
@@ -52,8 +53,8 @@ int part1(List<List<int>> area) {
 int combat(List<List<int>> area, List<Unit> allUnits) {
   var turns = 0;
   while (true) {
+    // printArea(turns, -1, area, allUnits);
     for (final unit in allUnits.asMap().entries) {
-      printArea(turns, unit.key, area, allUnits);
       if (!turn(area, allUnits, unit.value)) return turns;
     }
     allUnits = allUnits.where((e) => e.hp > 0).toList()
@@ -108,6 +109,8 @@ void printArea(int turn, int idx, List<List<int>> area, List<Unit> allUnits) {
 }
 
 bool turn(List<List<int>> area, List<Unit> allUnits, Unit unit) {
+  var sw = Stopwatch()..start();
+
   if (unit.hp < 0) return true; // turn ends - unit is dead
   var liveUnits = allUnits.where((e) => e.hp > 0).toList();
   var targets = liveUnits.where((e) => e.point.id != unit.point.id).toList();
@@ -116,8 +119,8 @@ bool turn(List<List<int>> area, List<Unit> allUnits, Unit unit) {
 
   var closest = closestTarget(area, unit, targets, allies);
   if (closest == null) return true; // turn ends - no target was reachable
-  if (closest.path.length > 1) {
-    unit.move(closest.path.first);
+  if (closest.secondMove != null) {
+    unit.move(closest.firstMove!);
   }
 
   var possibleAttack =
@@ -132,20 +135,21 @@ bool turn(List<List<int>> area, List<Unit> allUnits, Unit unit) {
 }
 
 class PathTarget {
-  final List<Direction> path;
+  final Direction? firstMove;
+  final Direction? secondMove;
   final Point point;
 
-  PathTarget(this.path, this.point);
+  const PathTarget(this.point, [this.firstMove, this.secondMove]);
 }
 
 // bfs
 PathTarget? closestTarget(List<List<int>> area, Unit unit, List<Unit> targets, List<Unit> allies) {
-  final queue = [PathTarget([], unit.point)];
+  Queue<PathTarget> queue = Queue.from([PathTarget(unit.point)]);
   final visited = allies.map((a) => a.point).toSet();
   final targetSet = targets.map((t) => t.point).toSet();
 
   while (queue.isNotEmpty) {
-    final current = queue.removeAt(0);
+    final current = queue.removeFirst();
     visited.add(current.point);
 
     var validDirections = directions.where((d) {
@@ -155,15 +159,20 @@ PathTarget? closestTarget(List<List<int>> area, Unit unit, List<Unit> targets, L
           p.x < area.length &&
           p.y < area.length &&
           !visited.contains(p) &&
-          !{wall}.contains(area[p.y][p.x]);
+          area[p.y][p.x] != wall;
     }).toList();
     var next = validDirections
         .map((d) => PathTarget(
-            current.path.length > 1 ? current.path : [...current.path, d], current.point.move(d)))
+              current.point.move(d),
+              current.firstMove ?? d,
+              current.firstMove != null ? current.secondMove ?? d : null,
+            ))
         .toList();
 
     var maybe = next.where((n) => targetSet.contains(n.point));
     if (maybe.isNotEmpty) return maybe.first;
+
+    visited.addAll(next.map((e) => e.point));
 
     queue.addAll(next);
   }
