@@ -47,7 +47,7 @@ int combat(List<List<int>> area, List<Unit> allUnits) {
       ..sort(
         (a, b) => a.point.y != b.point.y ? a.point.y - b.point.y : a.point.x - b.point.x,
       );
-    printArea(turns, -1, area, allUnits);
+    // printArea(turns, -1, area, allUnits);
     for (final unit in allUnits) {
       if (!turn(area, allUnits, unit)) return turns;
     }
@@ -103,8 +103,8 @@ bool turn(List<List<int>> area, List<Unit> allUnits, Unit unit) {
 
   var closest = closestTarget(area, unit, targets, allies);
   if (closest == null) return true; // turn ends - no target was reachable
-  if (closest.path.length > 1) {
-    unit.move(closest.path.first);
+  if (closest.length > 1) {
+    unit.move(closest.firstMove!);
   }
 
   var possibleAttack =
@@ -119,20 +119,28 @@ bool turn(List<List<int>> area, List<Unit> allUnits, Unit unit) {
 }
 
 class PathTarget {
-  final List<Direction> path;
+  final Direction? firstMove;
   final Point point;
+  final int length;
 
-  PathTarget(this.point, this.path);
+  PathTarget(this.point, [this.firstMove = null, this.length = 0]);
 }
 
 // bfs
 PathTarget? closestTarget(List<List<int>> area, Unit unit, List<Unit> targets, List<Unit> allies) {
-  Queue<PathTarget> queue = Queue.from([PathTarget(unit.point, [])]);
+  Queue<PathTarget> queue = Queue.from([PathTarget(unit.point)]);
   final visited = allies.map((a) => a.point).toSet();
   final targetSet = targets.map((t) => t.point).toSet();
 
+  List<PathTarget> found = [];
   while (queue.isNotEmpty) {
     final current = queue.removeFirst();
+
+    if (found.isNotEmpty && found.first.length <= current.length) {
+      found.sort((a, b) => a.point.y != b.point.y ? a.point.y - b.point.y : a.point.x - b.point.x);
+      return found.first;
+    }
+
     visited.add(current.point);
 
     var validDirections = directions.where((d) {
@@ -147,12 +155,12 @@ PathTarget? closestTarget(List<List<int>> area, Unit unit, List<Unit> targets, L
     var next = validDirections
         .map((d) => PathTarget(
               current.point.move(d),
-              [...current.path, d],
+              current.firstMove ?? d,
+              current.length + 1,
             ))
         .toList();
 
-    var maybe = next.where((n) => targetSet.contains(n.point));
-    if (maybe.isNotEmpty) return maybe.first;
+    found.addAll(next.where((n) => targetSet.contains(n.point)));
 
     visited.addAll(next.map((e) => e.point));
 
@@ -192,7 +200,7 @@ int part2(List<List<int>> area) {
           .map((e) => e.hp)
           .where((e) => e > 0)
           .reduce((acc, v) => acc + v);
-      print("dmg: $mid, turns: $turns, allHP: $allHP, mult: ${turns * allHP}");
+      // print("dmg: $mid, turns: $turns, allHP: $allHP, mult: ${turns * allHP}");
       memory[mid] = turns * allHP;
     } else {
       lo = mid + 1;
