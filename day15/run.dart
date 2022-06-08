@@ -13,19 +13,19 @@ Future<List<List<int>>> process(String path) async {
   if (data.length < data[0].length) {
     return [
       ...data,
-      ...List.filled(data[0].length - data.length, List.filled(data[0].length, pound)),
+      ...List.filled(data[0].length - data.length, List.filled(data[0].length, wall)),
     ];
   }
   return data
       .map((line) => [
             ...line,
-            ...List.filled(data.length - data[0].length, pound),
+            ...List.filled(data.length - data[0].length, wall),
           ])
       .toList();
 }
 
 var code = "#.GE".codeUnits;
-var pound = code[0];
+var wall = code[0];
 var space = code[1];
 var goblin = code[2];
 var elf = code[3];
@@ -52,10 +52,14 @@ int part1(List<List<int>> area) {
 int combat(List<List<int>> area, List<Unit> allUnits) {
   var turns = 0;
   while (true) {
-    printArea(turns, area, allUnits);
-    for (final unit in allUnits) {
-      if (!turn(area, allUnits, unit)) return turns;
+    for (final unit in allUnits.asMap().entries) {
+      printArea(turns, unit.key, area, allUnits);
+      if (!turn(area, allUnits, unit.value)) return turns;
     }
+    allUnits = allUnits.where((e) => e.hp > 0).toList()
+      ..sort(
+        (a, b) => a.point.y != b.point.y ? a.point.y - b.point.y : a.point.x - b.point.x,
+      );
     turns++;
   }
 }
@@ -86,8 +90,8 @@ class Unit {
   Iterable<Point> next(int maxSize) => point.next(maxSize);
 }
 
-void printArea(int turn, List<List<int>> area, List<Unit> allUnits) {
-  print("TURN: $turn");
+void printArea(int turn, int idx, List<List<int>> area, List<Unit> allUnits) {
+  print("TURN: $turn, idx: $idx");
   allUnits.forEach(print);
   var emptyArea = area
       .map(String.fromCharCodes)
@@ -151,10 +155,11 @@ PathTarget? closestTarget(List<List<int>> area, Unit unit, List<Unit> targets, L
           p.x < area.length &&
           p.y < area.length &&
           !visited.contains(p) &&
-          !{pound}.contains(area[p.y][p.x]);
+          !{wall}.contains(area[p.y][p.x]);
     }).toList();
     var next = validDirections
-        .map((d) => PathTarget([...current.path, d], current.point.move(d)))
+        .map((d) => PathTarget(
+            current.path.length > 1 ? current.path : [...current.path, d], current.point.move(d)))
         .toList();
 
     var maybe = next.where((n) => targetSet.contains(n.point));
