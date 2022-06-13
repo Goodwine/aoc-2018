@@ -130,13 +130,35 @@ const directions = [
   Direction.down,
 ];
 
+const cornerDirections = [
+  [Direction.up],
+  [Direction.left],
+  [Direction.right],
+  [Direction.down],
+  [Direction.up, Direction.left],
+  [Direction.up, Direction.right],
+  [Direction.down, Direction.left],
+  [Direction.down, Direction.right],
+];
+
 class Point {
   final int x, y, id;
   const Point(this.x, this.y, [this.id = -1]);
 
-  Iterable<Point> next(int maxSize) => directions
-      .map((d) => Point(x + d.dx, y + d.dy, id))
-      .where((p) => p.x >= 0 && p.y >= 0 && p.x < maxSize && p.y < maxSize);
+  Iterable<Point> next(int maxSize, {bool corners = false}) {
+    Iterable<Point> points;
+    if (corners) {
+      points = cornerDirections.map((ds) {
+        int dx = ds.map((e) => e.dx).reduce((acc, v) => acc + v);
+        int dy = ds.map((e) => e.dy).reduce((acc, v) => acc + v);
+        return Point(x + dx, y + dy, id);
+      });
+    } else {
+      points = directions.map((d) => Point(x + d.dx, y + d.dy, id));
+    }
+
+    return points.where((p) => p.x >= 0 && p.y >= 0 && p.x < maxSize && p.y < maxSize);
+  }
 
   Point move(Direction dir) => Point(x + dir.dx, y + dir.dy, id);
 
