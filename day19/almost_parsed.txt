@@ -1,0 +1,187 @@
+() {
+  // 0
+  ptr = 17;
+},
+
+() {
+  // 1
+  b = 1;
+  ptr++;
+},
+() {
+  // 2
+  d = 1;
+  ptr++;
+},
+() {
+  // 3
+  tmp = b * d;
+  ptr += 2;
+},
+() {
+  // 4
+  throw Error();
+},
+() {
+  // 5
+  if (tmp == c) a += b;
+  d++;
+  ptr = d > c ? 12 : 3;
+},
+() {
+  // 6
+  throw Error();
+},
+() {
+  // 7
+  throw Error();
+},
+() {
+  // 8
+  throw Error();
+},
+() {
+  // 9
+  throw Error();
+},
+() {
+  // 10
+  throw Error();
+},
+() {
+  // 11
+  throw Error();
+},
+() {
+  // 12
+  b++;
+  ptr = b > c ? 16 : 2;
+},
+() {
+  // 13
+  throw Error();
+},
+() {
+  // 14
+  throw Error();
+},
+() {
+  // 15
+  throw Error();
+},
+() {
+  // 16
+  ptr = 100000; // exit
+},
+() {
+  // 17
+  c += 2;
+  c *= c;
+  c *= 19 * 11;
+  tmp = tmp * 22 + 160;
+  c += tmp;
+  if (a == 0) {
+    ptr = 1;
+    return;
+  }
+  if (a > 9) {
+    ptr = 10000; // exit
+    return;
+  }
+  if (a <= 1) tmp = 27;
+  if (a <= 2) tmp *= 28;
+  if (a <= 3) tmp += 29;
+  if (a <= 4) tmp *= 30;
+  if (a <= 5) tmp *= 14;
+  if (a <= 6) tmp *= 32;
+  if (a <= 7) c += tmp;
+  if (a <= 8) a = 0;
+  if (a <= 9) {
+    ptr = 1;
+    return;
+  }
+},
+() {
+  // 15
+  throw Error();
+},
+() {
+  // 16
+  throw Error();
+},
+() {
+  // 17
+  throw Error();
+},
+() {
+  // 18
+  throw Error();
+},
+() {
+  // 19
+  throw Error();
+},
+() {
+  // 20
+  throw Error();
+},
+() {
+  // 21
+  throw Error();
+},
+() {
+  // 22
+  throw Error();
+},
+() {
+  // 23
+  throw Error();
+},
+() {
+  // 24
+  throw Error();
+},
+() {
+  // 25
+  throw Error();
+},
+() {
+  // 26
+  throw Error();
+},
+() {
+  // 27
+  throw Error();
+},
+() {
+  // 28
+  throw Error();
+},
+() {
+  // 29
+  throw Error();
+},
+() {
+  // 30
+  throw Error();
+},
+() {
+  // 31
+  throw Error();
+},
+() {
+  // 32
+  throw Error();
+},
+() {
+  // 33
+  throw Error();
+},
+() {
+  // 34
+  throw Error();
+},
+() {
+  // 35
+  throw Error();
+},

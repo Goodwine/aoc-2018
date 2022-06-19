@@ -175,3 +175,122 @@ class Point {
   @override
   int get hashCode => Object.hash(x, y);
 }
+
+enum OpCode {
+  addr,
+  addi,
+
+  mulr,
+  muli,
+
+  andr,
+  andi,
+
+  orr,
+  ori,
+
+  setr,
+  seti,
+
+  gtir,
+  gtri,
+  gtrr,
+
+  eqir,
+  eqri,
+  eqrr,
+}
+
+typedef Program = List<Tuple4<OpCode, int, int, int>>;
+typedef RawProgram = List<List<int>>;
+
+RawProgram rawProgram(Iterable<String> input) =>
+    input.map((e) => e.split(" ").map(int.parse).toList()).toList();
+
+Program parseProgram(Iterable<String> input) {
+  return input
+      .map((e) => e.split(" "))
+      .map((e) => Tuple4(
+            OpCode.values.asNameMap()[e[0]]!,
+            int.parse(e[1]),
+            int.parse(e[2]),
+            int.parse(e[3]),
+          ))
+      .toList();
+}
+
+class Computer {
+  late final List<int> reg;
+
+  Computer(List<int> reg) {
+    this.reg = [...reg];
+  }
+
+  void run(Program program, final int pcRegister, {int timeout = 10000000000}) {
+    for (var i = 0; i < timeout; i++) {
+      if (reg[pcRegister] >= program.length) break;
+
+      var line = program[reg[pcRegister]];
+      runSingle(line.item1, line.item2, line.item3, line.item4);
+      reg[pcRegister]++;
+    }
+  }
+
+  void runSingle(
+    OpCode opcode,
+    int a,
+    int b,
+    int out,
+  ) {
+    switch (opcode) {
+      case OpCode.addr:
+        reg[out] = reg[a] + reg[b];
+        break;
+      case OpCode.addi:
+        reg[out] = reg[a] + b;
+        break;
+      case OpCode.mulr:
+        reg[out] = reg[a] * reg[b];
+        break;
+      case OpCode.muli:
+        reg[out] = reg[a] * b;
+        break;
+      case OpCode.andr:
+        reg[out] = reg[a] & reg[b];
+        break;
+      case OpCode.andi:
+        reg[out] = reg[a] & b;
+        break;
+      case OpCode.orr:
+        reg[out] = reg[a] | reg[b];
+        break;
+      case OpCode.ori:
+        reg[out] = reg[a] | b;
+        break;
+      case OpCode.gtir:
+        reg[out] = a > reg[b] ? 1 : 0;
+        break;
+      case OpCode.gtri:
+        reg[out] = reg[a] > b ? 1 : 0;
+        break;
+      case OpCode.gtrr:
+        reg[out] = reg[a] > reg[b] ? 1 : 0;
+        break;
+      case OpCode.eqir:
+        reg[out] = a == reg[b] ? 1 : 0;
+        break;
+      case OpCode.eqri:
+        reg[out] = reg[a] == b ? 1 : 0;
+        break;
+      case OpCode.eqrr:
+        reg[out] = reg[a] == reg[b] ? 1 : 0;
+        break;
+      case OpCode.setr:
+        reg[out] = reg[a];
+        break;
+      case OpCode.seti:
+        reg[out] = a;
+        break;
+    }
+  }
+}
