@@ -1,29 +1,29 @@
+import 'dart:collection';
+
 import 'package:aoc2018/aoc.dart';
 import 'package:stack/stack.dart';
+import 'package:tuple/tuple.dart';
 
 void main() {
   solve(
-    (path) async => (await read(path)).first,
+    (path) async => Grid.explore((await read(path)).first),
     part1,
     part2,
     extra: "medium",
   );
 }
 
-int part1(String data) {
-  var grid = Grid.explore(data);
-  print(grid);
-  return 0;
+int part1(Grid data) {
+  return data.longest().item1;
 }
 
-int part2(String data) {
-  throw Error();
-  return 0;
+int part2(Grid data) {
+  return data.longest().item2;
 }
 
 enum State { wall, room, door }
 
-const mid = 10;
+const mid = 110;
 
 const mapping = {
   "N": Direction.up,
@@ -38,39 +38,26 @@ class Grid {
   Grid.explore(String data) {
     grid[mid][mid] = State.room;
 
-    Stack<List<List<Direction>>?> stack = Stack();
-    List<List<Direction>> curr = [[]];
-    // List<Point> points = [Point(mid, mid)];
+    Stack<List<Point>> parenStack = Stack();
+    Stack<List<Point>> pipeStack = Stack();
+    List<Point> curr = [Point(mid, mid)];
 
     for (var i = 1; i < data.length - 1; i++) {
       switch (data[i]) {
-        case ")":
-          while (stack.top() != null) {
-            curr.addAll(stack.pop()!);
-          }
-          stack.pop(); // remove spacer
-          var prev = stack.pop()!;
-
-          // var doors = points.map((e) => e.move(dir));
-          // for (var d in doors) grid[d.y][d.x] = State.door;
-          // points = doors.map((e) => e.move(dir)).toList();
-          // for (var p in points) grid[p.y][p.x] = State.room;
-
-          curr = [
-            for (var c in curr)
-              for (var p in prev) [...p, ...c]
-          ];
+        case "(":
+          parenStack.push(curr);
+          pipeStack.push([]); // start fresh, this is key
           break;
 
-        case "(":
-          stack.push(curr);
-          stack.push(null); // add spacer
-          curr = [[]];
+        case ")":
+          curr = [...pipeStack.pop(), ...curr];
+          parenStack.pop(); // drop
           break;
 
         case "|":
-          stack.push(curr);
-          curr = [[]];
+          curr = [...pipeStack.pop(), ...curr];
+          pipeStack.push(curr);
+          curr = parenStack.top();
           break;
 
         case "N":
@@ -78,8 +65,18 @@ class Grid {
         case "W":
         case "S":
           var dir = mapping[data[i]]!;
-          for (var c in curr) c.add(dir);
-
+          var doors = curr.map((p) => p.move(dir));
+          for (var d in doors) {
+            grid[d.y][d.x] = State.door;
+          }
+          curr = doors
+              .map((p) => p.move(dir))
+              // cut hydra heads
+              .where((p) => grid[p.y][p.x] == State.wall)
+              .toList();
+          for (var p in curr) {
+            grid[p.y][p.x] = State.room;
+          }
           break;
 
         default:
@@ -99,7 +96,35 @@ class Grid {
               case State.door:
                 return " ";
             }
-            ;
           }).join(""))
       .join("\n");
+
+  Tuple2<int, int> longest() {
+    var seen = {Point(mid, mid)};
+    var curr = [Point(mid, mid)];
+    var door = false;
+    var count = 0;
+    var gteNCount = 0;
+
+    const n = 1000;
+
+    while (curr.length > 0) {
+      if (door) count++;
+
+      var p = curr
+          .expand((element) => element.next(mid * 2))
+          .toSet()
+          .where((p) => grid[p.x][p.y] != State.wall)
+          .where((p) => !seen.contains(p))
+          .toList();
+
+      // IDK why I had to do -1, probably a bug
+      if (!door && count >= n - 1) gteNCount += p.length;
+
+      seen.addAll(p);
+      curr = p;
+      door = !door;
+    }
+    return Tuple2(count, gteNCount);
+  }
 }
