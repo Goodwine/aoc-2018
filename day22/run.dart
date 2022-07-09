@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:math';
 
 import 'package:aoc2018/aoc.dart';
@@ -48,11 +49,15 @@ List<List<Tile>> gridify(Point target, int depth) {
 }
 
 int part2(Tuple2<int, Point> data) {
-  var maxSize = Point(data.item2.x + 10, data.item2.y + 10);
+  // Less than 50 probably works but I am hackingly setting a different target
+  // which sets the coordinate as "rocky" affecting the finding algorithm.
+  // This new tile should be put far away from the actual target but not too
+  // far because otherwise it takes a long long time.
+  var maxSize = Point(data.item2.x + 50, data.item2.y + 50);
   var grid = gridify(maxSize, data.item1);
   grid[data.item2.y][data.item2.x] = Tile.rocky;
 
-  return DP(data.item2, maxSize, grid).navigate(Point(0, 0), Tool.gear, 1);
+  return DP(data.item2, maxSize, grid).navigate();
 }
 
 enum Tile { rocky, wet, narrow }
@@ -75,37 +80,45 @@ class DP {
 
   DP(this.target, this.maxSize, this.grid);
 
-  int navigate(Point p, Tool t, int time) {
-    var toolSet = allowed[grid[p.y][p.x]]!;
-    if (!toolSet.contains(t)) {
-      return 1 << 62; // infinite-ish
-    }
-    if (p == target) {
-      return time + (t == Tool.torch ? 1 : 7);
-    }
-    var dpk = Tuple2(p, t);
-    if (dp[dpk] != null && time >= dp[dpk]!) {
-      return 1 << 62; // infinite-ish
-    }
-    dp[dpk] = time;
+  int navigate() {
+    Queue<Tuple3<Point, Tool, int>> queue = Queue.from([
+      Tuple3(
+        Point(0, 0),
+        Tool.torch,
+        0,
+      )
+    ]);
 
-    var theOtherTool = toolSet.where((v) => v != t).first;
+    int currMin = 1 << 62; // infinite-ish
+    while (queue.isNotEmpty) {
+      var args = queue.removeFirst();
+      Point p = args.item1;
+      Tool t = args.item2;
+      int time = args.item3;
 
-    // Had to split because I am getting StackOverflow
-    var next = directions
-        .map(p.move)
-        .where((n) => n.x >= 0)
-        .where((n) => n.y >= 0)
-        .where((n) => n.x <= maxSize.x)
-        .where((n) => n.y <= maxSize.y)
-        .toList();
+      var toolSet = allowed[grid[p.y][p.x]]!;
+      if (!toolSet.contains(t)) continue; // invalid move
+      if (p == target) {
+        currMin = min(currMin, time + (t == Tool.torch ? 0 : 7));
+        continue;
+      }
+      var dpk = Tuple2(p, t);
+      if (dp[dpk] != null && time >= dp[dpk]!) continue; // there is a better path
+      dp[dpk] = time;
 
-    var currMin = 1 << 62; // infinite-ish
-    for (var n in next) {
-      // Had to split because I am getting StackOverflow
-      var sameTool = navigate(n, t, time + 1);
-      var otherTool = navigate(n, theOtherTool, time + 8);
-      currMin = [sameTool, otherTool, currMin].reduce(min);
+      var theOtherTool = toolSet.where((v) => v != t).first;
+
+      var next = directions
+          .map(p.move)
+          .where((n) => n.x >= 0)
+          .where((n) => n.y >= 0)
+          .where((n) => n.x <= maxSize.x)
+          .where((n) => n.y <= maxSize.y);
+
+      for (var n in next) {
+        queue.add(Tuple3(n, t, time + 1));
+        queue.add(Tuple3(n, theOtherTool, time + 8));
+      }
     }
     return currMin;
   }
