@@ -14,18 +14,19 @@ void main() {
           lines.sublist(immune.length + 3).map((e) => UnitGroup.from(e, "infection")).toList();
       return Tuple2(immune, infection);
     },
-    part1,
+    (Tuple2<List<UnitGroup>, List<UnitGroup>> data) => part1(data)!.abs(),
     part2,
   );
 }
 
-int part1(Tuple2<List<UnitGroup>, List<UnitGroup>> data) {
+int? part1(Tuple2<List<UnitGroup>, List<UnitGroup>> data) {
   var immune = {...data.item1};
   var infection = {...data.item2};
+  var everything = [...immune, ...infection];
 
   while (immune.isNotEmpty && infection.isNotEmpty) {
     // target selection
-    var everything = [...immune, ...infection]..sort();
+    everything.sort();
     var chosen = <UnitGroup, UnitGroup>{}; // target: aggresor
     for (var ug in everything) {
       var enemies = ug.kind == "immune" ? infection : immune;
@@ -37,6 +38,7 @@ int part1(Tuple2<List<UnitGroup>, List<UnitGroup>> data) {
     }
 
     // attack phase
+    var stalemate = true;
     var attacks = chosen.entries.toList()
       ..sort((a, b) => b.value.initiative - a.value.initiative); // DESC initiative
     for (var attack in attacks) {
@@ -44,32 +46,63 @@ int part1(Tuple2<List<UnitGroup>, List<UnitGroup>> data) {
       var target = attack.key;
       if (aggressor.size <= 0) continue;
 
-      target.size -= aggressor.dmgTo(target) ~/ target.hp; // attack
+      var delta = aggressor.dmgTo(target) ~/ target.hp; // attack
+      if (delta != 0) stalemate = false;
+      target.size -= delta;
 
       if (target.size <= 0) {
         immune.remove(target);
         infection.remove(target);
+        everything.remove(target);
       }
     }
+
+    if (stalemate) return null;
   }
 
-  return [...immune, ...infection].map((e) => e.size).reduce((a, b) => a + b);
+  return everything.map((e) => e.kind == "immune" ? e.size : -e.size).reduce((a, b) => a + b);
 }
 
 int part2(Tuple2<List<UnitGroup>, List<UnitGroup>> data) {
-  return 0;
+  var immune = data.item1;
+  var infection = data.item2;
+  var everything = [...immune, ...infection];
+
+  var lo = 0, hi = 100000;
+  while (lo + 1 <= hi) {
+    var mid = (lo + hi) ~/ 2;
+
+    everything.forEach((e) => e.reset());
+    immune.forEach((e) => e.boost = mid);
+
+    var result = part1(data);
+    if (result == null || result <= 0) {
+      lo = mid + 1;
+    } else {
+      if (result > 0) hi = mid;
+    }
+  }
+  // evaluate smallest boost
+  everything.forEach((e) => e.reset());
+  immune.forEach((e) => e.boost = lo);
+
+  return part1(data)!;
 }
 
 class UnitGroup implements Comparable<UnitGroup> {
   late int size;
+  int boost = 0;
+  late final int _size;
   late final int hp, dmg, initiative;
   late final String dmgType;
   final Set<String> weaknesses = {}, immunities = {};
   final String kind, line;
 
-  int get effectiveDmg => dmg * size;
+  int get effectiveDmg => (dmg + boost) * size;
   bool operator ==(Object b) => b is UnitGroup && b.kind == kind && b.line == line;
   int get hashCode => Object.hash(kind, line);
+
+  void reset() => size = _size;
 
   /// Parses single line like this:
   ///
@@ -82,6 +115,7 @@ class UnitGroup implements Comparable<UnitGroup> {
     var parts = line.split(" ");
 
     size = int.parse(parts[0]);
+    _size = int.parse(parts[0]);
     hp = int.parse(parts[4]);
 
     initiative = int.parse(parts[parts.length - 1]);
@@ -110,7 +144,7 @@ class UnitGroup implements Comparable<UnitGroup> {
 
   @override
   String toString() =>
-      "[$kind] $size units each with $hp hit points (weak to ${weaknesses}; immune to ${immunities}) with an attack that does $dmg radiation damage at initiative $initiative\n";
+      "[$kind] $size units each with $hp hit points (weak to ${weaknesses}; immune to ${immunities}) with an attack that does ${dmg + boost} radiation damage at initiative $initiative\n";
 
   @override
   int compareTo(UnitGroup b) {
